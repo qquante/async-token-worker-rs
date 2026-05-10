@@ -1,0 +1,76 @@
+[package]
+name = "four-meme"
+version = "0.1.0"
+edition = "2021"
+description = "Four.Meme Token Creator - High performance Rust implementation"
+authors = ["BSC Agent"]
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# HTTP client
+reqwest = { version = "0.11", features = ["json", "multipart", "rustls-tls"], default-features = false }
+
+# Ethereum/BSC
+ethers = { version = "2.0", features = ["rustls", "ws"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Utilities
+hex = "0.4"
+chrono = "0.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+base64 = "0.21"
+futures = "0.3"
+lazy_static = "1.4"
+
+# Redis
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+
+# CLI (optional)
+clap = { version = "4.4", features = ["derive", "env"], optional = true }
+dotenv = { version = "0.15", optional = true }
+
+[features]
+default = []
+cli = ["clap", "dotenv"]
+worker = ["dotenv"]
+
+[[bin]]
+name = "four-meme-cli"
+path = "src/bin/cli.rs"
+required-features = ["cli"]
+
+[[bin]]
+name = "four-meme-worker"
+path = "src/bin/worker.rs"
+required-features = ["worker"]
+
+[[bin]]
+name = "test-broadcaster"
+path = "src/bin/test_broadcaster.rs"
+required-features = ["cli"]
+
+[[bin]]
+name = "test-fire-real"
+path = "src/bin/test_fire_real.rs"
+required-features = ["cli"]
+
+[lib]
+name = "four_meme"
+path = "src/lib.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
