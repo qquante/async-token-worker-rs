@@ -60,25 +60,27 @@ pub struct RpcEndpoint {
 }
 
 // ============================================================================
-// YOUR ENDPOINTS (HARDCODED - ALWAYS ACTIVE)
+// ENDPOINT CONFIGURATION
 // ============================================================================
 
 /// bloXroute Authorization Header
-pub const BLOXROUTE_AUTH: &str = "[REMOVED_CREDENTIAL]";
+
 
 /// BlockRazor Authorization Token
-pub const BLOCKRAZOR_AUTH: &str = "[REMOVED_CREDENTIAL]";
+
 
 /// Ankr API Key
-pub const ANKR_API_KEY: &str = "[REMOVED_CREDENTIAL]";
+
 
 /// Chainstack API Key
-pub const CHAINSTACK_API_KEY: &str = "[REMOVED_CREDENTIAL]";
 
-/// Default endpoints for BSC - ALL YOUR ENDPOINTS ALWAYS ACTIVE
-/// Each endpoint uses the CORRECT METHOD for that specific builder!
-pub fn default_endpoints() -> Vec<RpcEndpoint> {
-    vec![
+
+/// Public defaults plus explicitly configured provider endpoints.
+fn configured_default_endpoints<F>(mut read: F) -> Vec<RpcEndpoint>
+where
+    F: FnMut(&str) -> Option<String>,
+{
+    let mut endpoints = vec![
         // =====================================================
         // TIER 0: LOCAL POW PROXY - MAXIMUM PRIORITY!
         // =====================================================
@@ -114,52 +116,44 @@ pub fn default_endpoints() -> Vec<RpcEndpoint> {
         // Método: eth_sendPrivateTransaction
         // URL: https://rpc.blockrazor.builders
         // Docs: https://blockrazor.gitbook.io/blockrazor/bsc/block-builder
-        RpcEndpoint {
-            name: "BlockRazor".to_string(),
-            url: "https://rpc.blockrazor.builders".to_string(),
-            auth_header: Some(BLOCKRAZOR_AUTH.to_string()),
-            priority: 1,
-            is_builder: true,
-            method: RpcMethod::EthSendPrivateTransaction,
-        },
         
         // bloXroute - BDN (~15% dos blocos)
         // Método: bsc_private_tx (método específico do bloXroute para BSC)
         // PAYLOAD ESPECIAL: {"params": {"transaction": "...", "mev_builders": ["all"]}}
         // URL: https://docs.bloxroute.com/bsc-and-eth/apis/frontrunning-protection/bsc-private-transactions
-        RpcEndpoint {
-            name: "bloXroute".to_string(),
-            url: "https://api.blxrbdn.com".to_string(),
-            auth_header: Some(BLOXROUTE_AUTH.to_string()),
-            priority: 1,
-            is_builder: true,
-            method: RpcMethod::BscPrivateTx,
-        },
         
         // =====================================================
         // TIER 2: FAST RPCs (BACKUP - mempool público)
         // =====================================================
         
         // Ankr - Fast RPC (backup, mempool público)
-        RpcEndpoint {
-            name: "Ankr".to_string(),
-            url: format!("https://rpc.ankr.com/bsc/{}", ANKR_API_KEY),
-            auth_header: None,
-            priority: 10,
-            is_builder: false,
-            method: RpcMethod::EthSendRawTransaction,
-        },
         
         // Chainstack - Fast RPC (backup, mempool público)
-        RpcEndpoint {
-            name: "Chainstack".to_string(),
-            url: format!("https://bsc-mainnet.core.chainstack.com/{}", CHAINSTACK_API_KEY),
-            auth_header: None,
-            priority: 10,
-            is_builder: false,
-            method: RpcMethod::EthSendRawTransaction,
-        },
-    ]
+    ];
+    for (name, variable, base, method, priority, is_builder, header_auth) in [
+        ("BlockRazor", "BLOCKRAZOR_AUTH", "https://rpc.blockrazor.builders", RpcMethod::EthSendPrivateTransaction, 1, true, true),
+        ("bloXroute", "BLOXROUTE_AUTH", "https://api.blxrbdn.com", RpcMethod::BscPrivateTx, 1, true, true),
+        ("Ankr", "ANKR_API_KEY", "https://rpc.ankr.com/bsc/", RpcMethod::EthSendRawTransaction, 10, false, false),
+        ("Chainstack", "CHAINSTACK_API_KEY", "https://bsc-mainnet.core.chainstack.com/", RpcMethod::EthSendRawTransaction, 10, false, false),
+    ] {
+        let Some(value) = read(variable).filter(|value| !value.trim().is_empty()) else {
+            continue;
+        };
+        let url = if header_auth { base.to_string() } else { format!("{}{}", base, value) };
+        endpoints.push(RpcEndpoint {
+            name: name.to_string(),
+            url,
+            auth_header: if header_auth { Some(value) } else { None },
+            priority,
+            is_builder,
+            method,
+        });
+    }
+    endpoints
+}
+
+pub fn default_endpoints() -> Vec<RpcEndpoint> {
+    configured_default_endpoints(|name| std::env::var(name).ok())
 }
 
 // ============================================================================
@@ -817,24 +811,7 @@ impl Default for BroadcasterBuilder {
 /// - ANKR_API_KEY: Ankr API key
 /// - CHAINSTACK_API_KEY: Chainstack API key
 pub fn broadcaster_from_env() -> TxBroadcaster {
-    let mut builder = BroadcasterBuilder::new();
-
-    // Add bloXroute if configured
-    if let Ok(auth) = std::env::var("BLOXROUTE_AUTH") {
-        builder = builder.bloxroute(&auth);
-    }
-
-    // Add Ankr if configured
-    if let Ok(key) = std::env::var("ANKR_API_KEY") {
-        builder = builder.ankr(&key);
-    }
-
-    // Add Chainstack if configured
-    if let Ok(key) = std::env::var("CHAINSTACK_API_KEY") {
-        builder = builder.chainstack(&key);
-    }
-
-    builder.build()
+    BroadcasterBuilder::new().build()
 }
 
 // ============================================================================
@@ -847,11 +824,23 @@ mod tests {
 
     #[test]
     fn test_default_endpoints() {
-        let endpoints = default_endpoints();
-        assert!(endpoints.len() >= 3);
+        let endpoints = configured_default_endpoints(|_| None);
+        assert_eq!(endpoints.len(), 2);
+        assert!(endpoints.iter().all(|e| e.auth_header.is_none()));
         assert!(endpoints.iter().any(|e| e.name == "48Club"));
-        assert!(endpoints.iter().any(|e| e.name == "BlockRazor"));
-        assert!(endpoints.iter().any(|e| e.name == "bloXroute"));
+        assert!(endpoints.iter().all(|e| !["BlockRazor", "bloXroute", "Ankr", "Chainstack"].contains(&e.name.as_str())));
+    }
+
+    #[test]
+    fn configured_credentials_are_optional_and_explicit() {
+        let blank = configured_default_endpoints(|_| Some("  ".to_string()));
+        assert_eq!(blank.len(), 2);
+        let configured = configured_default_endpoints(|name| {
+            (name == "BLOCKRAZOR_AUTH").then(|| "fixture_auth".to_string())
+        });
+        assert_eq!(configured.len(), 3);
+        let endpoint = configured.iter().find(|e| e.name == "BlockRazor").unwrap();
+        assert_eq!(endpoint.auth_header.as_deref(), Some("fixture_auth"));
     }
 
     #[test]
@@ -861,7 +850,7 @@ mod tests {
             .ankr("test_key")
             .build();
 
-        assert!(broadcaster.endpoints().len() >= 5);
+        assert!(broadcaster.endpoints().len() >= 4);
         assert!(broadcaster.endpoints().iter().any(|e| e.name == "bloXroute"));
         assert!(broadcaster.endpoints().iter().any(|e| e.name == "Ankr"));
     }

@@ -31,3 +31,7 @@ This contains signing and real broadcast binaries, including test-fire-real. No 
 ## License
 
 No open-source license has been granted. Redistribution terms remain to be defined.
+
+## Provider configuration
+
+Optional provider credentials are read from the environment variables listed in `.env.example`. Providers with missing or blank values are omitted. Never commit a populated environment file. No credentials are bundled. Historical credentials must be rotated at their providers; deleting them from Git does not invalidate them.
