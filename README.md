@@ -1,38 +1,12 @@
 # Async Token Worker RS
 
-**Typed Redis jobs, bounded Tokio concurrency and BSC provider adapters.**
-
 ![Rust: 2021 edition](https://img.shields.io/badge/Rust-2021%20edition-DEA584?style=flat-square&logo=rust) ![Async: Tokio](https://img.shields.io/badge/Async-Tokio-333333?style=flat-square) ![Messaging: Redis Pub/Sub](https://img.shields.io/badge/Messaging-Redis%20Pub/Sub-DC382D?style=flat-square&logo=redis) [![License: MIT](https://img.shields.io/badge/License-MIT-555555?style=flat-square)](LICENSE)
 
-[Overview](#overview) · [Quickstart](#quickstart) · [Example](#example) · [Validation](#validation) · [Documentation](#documentation)
+An asynchronous Rust library and feature-gated worker for Four.Meme token-creation workflows on BSC. Typed Redis messages cross into API and blockchain adapters; Tokio tasks process requests under a semaphore limit.
 
-## Overview
+**Redis Pub/Sub is the transport, not a durable job queue.** Subscribers that are offline can miss messages. This distinction matters when integrating the worker into a larger deployment pipeline.
 
-An asynchronous Rust worker for token-deployment workflows. Redis carries typed requests, Tokio tasks execute concurrent work under a semaphore limit, and provider adapters separate network and blockchain operations from message handling. Worker and CLI binaries are opt-in Cargo features.
-
-**Stack:** Rust 2021 · Tokio · reqwest · ethers-rs · Redis · serde · tracing · Docker
-
-## From message to provider action
-
-| Component | Behavior |
-| --- | --- |
-| Typed requests | serde models describe token metadata and optional image/source fields. |
-| Bounded concurrency | `MAX_CONCURRENT` limits parallel token-creation tasks in the worker. |
-| Feature boundaries | The default feature set excludes the worker and CLI binaries. |
-| Messaging semantics | Redis Pub/Sub distributes requests and results; it is not a durable replay queue. |
-
-## Processing path
-
-```mermaid
-flowchart LR
-  A[Redis request channel] --> B[Typed request parser]
-  B --> C[Tokio tasks and semaphore]
-  C --> D[API and blockchain adapters]
-  D --> E[Typed result]
-  E --> F[Redis result channel]
-```
-
-## Quickstart
+## Compile the layers separately
 
 ```console
 cargo check --lib --locked
@@ -40,54 +14,51 @@ cargo test --lib --locked
 cargo check --all-features --bins --locked
 ```
 
-These commands compile and test library code and compile feature-gated binaries. They do not run the worker, contact an RPC, sign transactions or broadcast. On Windows, use the Rust/MSVC toolchain and its C/C++ linker prerequisites.
+The default Cargo feature set excludes worker and CLI binaries. See [Cargo.toml](Cargo.toml) for the opt-in features. These checks do not run a worker or submit a transaction. Windows builds require the Rust/MSVC linker prerequisites.
 
-## Example
+## Redis contract
 
-**Request contract**
-
-This synthetic message illustrates [TokenDeployRequest](src/redis_client.rs). It is documentation only; publishing it to an operational worker can trigger real execution.
+The request parser and result types live in [redis_client.rs](src/redis_client.rs). A synthetic request has this shape:
 
 ```json
 {
   "ticker": "DEMO",
   "name": "Example token",
-  "description": "Synthetic request for contract inspection",
+  "description": "Synthetic documentation input",
   "source": "documentation"
 }
 ```
 
-The serialized contract uses camelCase for optional fields such as `imageBase64`, `imageUrl` and `tweetUrl`. Worker modes select `deployer:en`, `deployer:zh`, `book:en` or `book:zh`; creation results are published on `token:created`.
+Optional serialized fields include `imageBase64`, `imageUrl` and `tweetUrl`. `WORKER_TYPE` selects `deployer:en`, `deployer:zh`, `book:en` or `book:zh`; creation results are sent to `token:created`.
 
-## Configuration and storage
+```mermaid
+sequenceDiagram
+  participant R as Redis Pub/Sub
+  participant W as Worker
+  participant S as Tokio semaphore
+  participant A as Provider adapters
+  R->>W: Typed creation request
+  W->>S: Acquire concurrency slot
+  S-->>W: Slot available
+  W->>A: Creation workflow
+  A-->>W: Result or error
+  W->>R: token:created
+  W->>S: Release slot
+```
 
-`WORKER_TYPE` selects a request channel; `MAX_CONCURRENT` controls parallel work. `REDIS_URL`, `BSC_RPC_URL` and `PRIVATE_KEY` configure operational dependencies. Optional provider credentials are listed in [.env.example](.env.example); providers with missing or blank values are omitted. Keep populated environment files and keys local.
+## Runtime configuration
 
-## Repository guide
-
-| Location | Responsibility |
+| Input | Responsibility |
 | --- | --- |
-| [Cargo.toml](Cargo.toml) | Feature flags and binary declarations |
-| [src/redis_client.rs](src/redis_client.rs) | Channels and serialized request/result types |
-| [src/bin/worker.rs](src/bin/worker.rs) | Worker configuration and concurrency |
-| [src/broadcaster.rs](src/broadcaster.rs) | Broadcast adapter |
-| [src/error.rs](src/error.rs) | Typed errors |
+| `MAX_CONCURRENT` | Bounds parallel token-creation tasks. |
+| `REDIS_URL` | Connects request/result transport. |
+| `BSC_RPC_URL` | Selects the blockchain provider. |
+| `PRIVATE_KEY` | Enables wallet authentication/signing paths. |
 
-## Validation
+Provider-specific inputs are listed in [.env.example](.env.example). Unconfigured optional providers are omitted. [worker.rs](src/bin/worker.rs) implements startup and concurrency; [broadcaster.rs](src/broadcaster.rs) implements broadcast adapters.
 
-Rust 1.99.1 on Windows/MSVC: library compilation, three library tests and compilation of all feature-gated binaries passed. No CLI, RPC, signing or broadcast was executed.
+The repository contains real signing and broadcast paths, including a binary named `test-fire-real`. Do not treat that name as an offline test. The recorded library/build checks establish compilation and covered library behavior, not latency superiority, chain success or deployment throughput.
 
-These are the last recorded offline checks (20 October 2026), not a new execution triggered by this documentation revision.
+**Technology:** Rust 2021 · Tokio · reqwest · ethers-rs · Redis · serde · tracing · Docker
 
-## Scope and operational boundaries
-
-The repository contains real signing/broadcast paths, including a binary named test-fire-real. A test-like filename does not make a command offline. Throughput, latency and chain behavior have not been established by the recorded compilation/library checks. Rotate any credentials previously exposed in Git at their providers.
-
-## Documentation
-
-- [Declared features and dependencies](Cargo.toml)
-- [Container build definition](Dockerfile)
-
-## License and attribution
-
-Project-authored source code is licensed under the [MIT License](LICENSE). Third-party components and datasets retain their respective rights and licenses.
+Project-authored source: [MIT](LICENSE). Third-party components retain their own notices and terms.
