@@ -17,9 +17,7 @@ use serde_json::json;
 use std::time::{Duration, Instant};
 use tracing_subscriber::EnvFilter;
 
-// ============================================================================
 // CONFIGURATION
-// ============================================================================
 
 const BSC_CHAIN_ID: u64 = 56;
 const GAS_PRICE_GWEI: u64 = 1;
@@ -41,9 +39,7 @@ struct JsonRpcError {
     message: String,
 }
 
-// ============================================================================
 // RPC HELPERS
-// ============================================================================
 
 async fn get_balance(client: &Client, address: &str) -> Result<f64> {
     let payload = json!({
@@ -132,9 +128,7 @@ async fn wait_for_receipt(client: &Client, tx_hash: &str, timeout_secs: u64) -> 
     }
 }
 
-// ============================================================================
 // MAIN
-// ============================================================================
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -62,9 +62,7 @@ use std::sync::RwLock;
 use std::time::{Duration, Instant};
 use tracing::info;
 
-// ============================================================================
 // CONSTANTS
-// ============================================================================
 
 /// Four.Meme API base URL
 pub const API_BASE: &str = "https://four.meme/meme-api";
@@ -86,9 +84,7 @@ pub const VALID_LABELS: &[&str] = &[
     "Meme", "AI", "Defi", "Games", "Infra", "De-Sci", "Social", "Depin", "Charity", "Others",
 ];
 
-// ============================================================================
 // AUTH CACHE (saves ~300-500ms per deploy)
-// ============================================================================
 
 /// Cached auth entry
 #[derive(Clone)]
@@ -128,9 +124,7 @@ fn set_cached_auth(address: &str, access_token: &str) {
     }
 }
 
-// ============================================================================
 // MAIN CLIENT
-// ============================================================================
 
 /// Main Four.Meme client - OPTIMIZED
 pub struct FourMeme {
@@ -398,9 +392,7 @@ impl FourMeme {
     }
 }
 
-// ============================================================================
 // BUY TOKENS
-// ============================================================================
 
 impl FourMeme {
     /// Buy tokens on Four.Meme bonding curve

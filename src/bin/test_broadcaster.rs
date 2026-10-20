@@ -18,9 +18,7 @@ use std::time::{Duration, Instant};
 use tracing::error;
 use tracing_subscriber::EnvFilter;
 
-// ============================================================================
 // TEST CONFIGURATIONS
-// ============================================================================
 
 /// Fake signed transaction for BSC (chain_id = 56)
 /// This is a properly formatted EIP-155 transaction that will be rejected 
@@ -54,9 +52,7 @@ struct JsonRpcError {
     message: String,
 }
 
-// ============================================================================
 // TEST FUNCTIONS
-// ============================================================================
 
 /// Test 1: Connectivity test (eth_blockNumber)
 async fn test_connectivity(client: &Client) -> Result<()> {
@@ -316,9 +312,7 @@ async fn test_fire_simulation() -> Result<()> {
     Ok(())
 }
 
-// ============================================================================
 // MAIN
-// ============================================================================
 
 #[tokio::main]
 async fn main() -> Result<()> {

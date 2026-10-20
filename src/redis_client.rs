@@ -15,30 +15,22 @@ use tracing::{debug, error, info, warn};
 
 use crate::error::FourMemeError;
 
-// ============================================================================
 // CHANNELS
-// ============================================================================
 
 pub mod channels {
-    // =========================================================================
     // TOKEN DEPLOYER channels (from token-deployer JS worker)
-    // =========================================================================
     /// Token Deployer - English channel
     pub const DEPLOYER_EN: &str = "deployer:en";
     /// Token Deployer - Chinese channel
     pub const DEPLOYER_ZH: &str = "deployer:zh";
 
-    // =========================================================================
     // BOOK WATCHER channels (from cz-book-watcher JS worker)
-    // =========================================================================
     /// Book Watcher - English channel
     pub const BOOK_EN: &str = "book:en";
     /// Book Watcher - Chinese channel
     pub const BOOK_ZH: &str = "book:zh";
 
-    // =========================================================================
     // OTHER channels
-    // =========================================================================
     /// VIP tweets from capture worker
     pub const VIP_TWEETS_NEW: &str = "vip:tweets:new";
     /// Token created notification
@@ -49,9 +41,7 @@ pub mod channels {
     pub const IMAGE_READY: &str = "image:ready";
 }
 
-// ============================================================================
 // MESSAGE TYPES
-// ============================================================================
 
 /// Token deployment request (from token-deployer or cz-book-watcher)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -111,9 +101,7 @@ pub struct SnipeResult {
     pub amount: String,
 }
 
-// ============================================================================
 // REDIS CLIENT
-// ============================================================================
 
 /// Redis client with pub/sub support
 pub struct RedisClient {
@@ -261,9 +249,7 @@ impl Clone for RedisClient {
     }
 }
 
-// ============================================================================
 // HELPERS
-// ============================================================================
 
 /// Parse deployment request from JSON string
 pub fn parse_deploy_request(json: &str) -> Result<TokenDeployRequest, FourMemeError> {

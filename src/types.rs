@@ -2,9 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-// ============================================================================
 // TOKEN CONFIGURATION
-// ============================================================================
 
 /// Configuration for creating a new token
 #[derive(Debug, Clone)]
@@ -59,9 +57,7 @@ impl Default for TokenConfig {
     }
 }
 
-// ============================================================================
 // RESULTS
-// ============================================================================
 
 /// Result of token creation
 #[derive(Debug, Clone, Serialize)]
@@ -145,9 +141,7 @@ pub struct TxResult {
     pub gas_used: String,
 }
 
-// ============================================================================
 // API TYPES
-// ============================================================================
 
 /// Response from nonce generation
 #[derive(Debug, Deserialize)]

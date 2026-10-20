@@ -50,9 +50,7 @@ macro_rules! log_stderr {
     };
 }
 
-// ============================================================================
 // CONFIGURATION
-// ============================================================================
 
 struct Config {
     private_key: String,
@@ -127,9 +125,7 @@ impl Config {
     }
 }
 
-// ============================================================================
 // WORKER
-// ============================================================================
 
 struct Worker {
     config: Arc<Config>,
@@ -153,9 +149,7 @@ impl Worker {
             }
         };
         
-        // =========================================================================
         // PRE-AUTH ON STARTUP (saves ~300ms on first deploy)
-        // =========================================================================
         log_stderr!("[WORKER] Pre-authenticating wallet...");
         info!("[WORKER] Pre-authenticating wallet...");
         match four_meme.pre_auth().await {
@@ -169,9 +163,7 @@ impl Worker {
             }
         }
         
-        // =========================================================================
         // PRE-FETCH NONCE ON STARTUP (saves ~100ms on first deploy)
-        // =========================================================================
         log_stderr!("[WORKER] Initializing nonce from blockchain...");
         info!("[WORKER] Initializing nonce from blockchain...");
         match four_meme.init_nonce().await {
@@ -204,9 +196,7 @@ impl Worker {
         log_stderr!("[WORKER] Worker::run() starting...");
         self.print_banner();
 
-        // =========================================================================
         // BACKGROUND AUTH REFRESH (renews cache every 4min50s)
-        // =========================================================================
         // This ensures auth cache is ALWAYS valid (0ms auth overhead)
         let four_meme_auth = Arc::clone(&self.four_meme);
         tokio::spawn(async move {
@@ -227,9 +217,7 @@ impl Worker {
         });
         info!("[WORKER] Background auth refresh task started (every 4min50s)");
         
-        // =========================================================================
         // BACKGROUND NONCE REFRESH (syncs every 8 seconds)
-        // =========================================================================
         // Uses max(local, chain) - catches external TXs (sells, etc) quickly
         let four_meme_nonce = Arc::clone(&self.four_meme);
         tokio::spawn(async move {
@@ -376,9 +364,7 @@ impl Worker {
     }
 }
 
-// ============================================================================
 // REQUEST PROCESSING
-// ============================================================================
 
 async fn process_request(
     config: &Config,
@@ -462,9 +448,7 @@ async fn process_request(
     Ok(result.token_address)
 }
 
-// ============================================================================
 // MAIN
-// ============================================================================
 
 #[tokio::main]
 async fn main() -> Result<()> {

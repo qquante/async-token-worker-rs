@@ -19,9 +19,7 @@ use tracing::{debug, error, info, warn};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 use futures::{SinkExt, StreamExt};
 
-// ============================================================================
 // CONFIGURATION
-// ============================================================================
 
 /// RPC method to use for sending transactions
 #[derive(Debug, Clone, PartialEq)]
@@ -59,9 +57,7 @@ pub struct RpcEndpoint {
     pub method: RpcMethod,
 }
 
-// ============================================================================
 // ENDPOINT CONFIGURATION
-// ============================================================================
 
 /// bloXroute Authorization Header
 
@@ -81,9 +77,7 @@ where
     F: FnMut(&str) -> Option<String>,
 {
     let mut endpoints = vec![
-        // =====================================================
         // TIER 0: LOCAL POW PROXY - MAXIMUM PRIORITY!
-        // =====================================================
         
         // Local POW Proxy (WebSocket) - Sends directly to miners
         // Uses host.docker.internal to access host from inside Docker
@@ -96,10 +90,8 @@ where
             method: RpcMethod::WebSocket,
         },
         
-        // =====================================================
         // TIER 1: BUILDERS (Privacy RPCs) - HIGH PRIORITY
         // Each uses the OPTIMAL method for that builder!
-        // =====================================================
         
         // 48Club - Maior builder da BSC (~45% dos blocos)
         // Método: eth_sendRawTransaction (Privacy RPC já envia direto pro builder)
@@ -122,9 +114,7 @@ where
         // PAYLOAD ESPECIAL: {"params": {"transaction": "...", "mev_builders": ["all"]}}
         // URL: https://docs.bloxroute.com/bsc-and-eth/apis/frontrunning-protection/bsc-private-transactions
         
-        // =====================================================
         // TIER 2: FAST RPCs (BACKUP - mempool público)
-        // =====================================================
         
         // Ankr - Fast RPC (backup, mempool público)
         
@@ -156,9 +146,7 @@ pub fn default_endpoints() -> Vec<RpcEndpoint> {
     configured_default_endpoints(|name| std::env::var(name).ok())
 }
 
-// ============================================================================
 // BROADCASTER
-// ============================================================================
 
 /// Result of a broadcast attempt to a single endpoint
 #[derive(Debug, Clone)]
@@ -458,9 +446,7 @@ impl Default for TxBroadcaster {
     }
 }
 
-// ============================================================================
 // INTERNAL FUNCTIONS
-// ============================================================================
 
 /// Send transaction to a single endpoint using the CORRECT method for that builder
 async fn send_to_endpoint(
@@ -674,9 +660,7 @@ async fn send_via_websocket(
     Ok(tx_hash)
 }
 
-// ============================================================================
 // BUILDER PATTERN FOR EASY CONFIGURATION
-// ============================================================================
 
 /// Builder for TxBroadcaster
 pub struct BroadcasterBuilder {
@@ -800,9 +784,7 @@ impl Default for BroadcasterBuilder {
     }
 }
 
-// ============================================================================
 // CONVENIENCE FUNCTION
-// ============================================================================
 
 /// Create a fully configured broadcaster from environment variables
 ///
@@ -814,9 +796,7 @@ pub fn broadcaster_from_env() -> TxBroadcaster {
     BroadcasterBuilder::new().build()
 }
 
-// ============================================================================
 // TESTS
-// ============================================================================
 
 #[cfg(test)]
 mod tests {

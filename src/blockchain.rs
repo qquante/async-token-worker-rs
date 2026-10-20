@@ -18,9 +18,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{debug, info, warn};
 
-// ============================================================================
 // NONCE MANAGER - Zero latency on deploy!
-// ============================================================================
 
 /// Nonce manager with background refresh
 /// 
@@ -301,9 +299,7 @@ impl Blockchain {
         
         debug!("[BLOCKCHAIN]   Using fixed gas: {}", gas_limit);
 
-        // =====================================================
         // 🔥 FIRE MODE - ALWAYS ACTIVE
-        // =====================================================
         info!(
             "[BLOCKCHAIN] 🔥 FIRE MODE: Broadcasting to {} RPCs simultaneously!",
             self.broadcaster.endpoints().len()
