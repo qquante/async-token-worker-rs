@@ -59,18 +59,6 @@ pub struct RpcEndpoint {
 
 // ENDPOINT CONFIGURATION
 
-/// bloXroute Authorization Header
-
-
-/// BlockRazor Authorization Token
-
-
-/// Ankr API Key
-
-
-/// Chainstack API Key
-
-
 /// Public defaults plus explicitly configured provider endpoints.
 fn configured_default_endpoints<F>(mut read: F) -> Vec<RpcEndpoint>
 where

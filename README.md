@@ -26,7 +26,17 @@ Redis job → typed request → bounded async worker → provider/blockchain ada
 
 ## Current limitations
 
-This contains signing and real broadcast binaries, including test-fire-real. No Rust toolchain is installed here; compilation, performance and chain behavior are unverified. Do not run those binaries for review.
+This contains signing and real broadcast binaries, including test-fire-real. Chain behavior and performance are unverified; the validation below does not execute those binaries.
+
+## Validation
+
+Rust 1.99.1 on Windows/MSVC: library compilation, three library tests and compilation of all feature-gated binaries passed. No CLI, RPC, signing or broadcast was executed.
+
+```console
+cargo check --lib --locked
+cargo test --lib --locked
+cargo check --all-features --bins --locked
+```
 
 ## License
 
