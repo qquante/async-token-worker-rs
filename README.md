@@ -30,7 +30,7 @@ This contains signing and real broadcast binaries, including test-fire-real. No 
 
 ## License
 
-No open-source license has been granted. Redistribution terms remain to be defined.
+Project-authored source code is licensed under the [MIT License](LICENSE). Third-party components and datasets retain their respective rights and licenses.
 
 ## Provider configuration
 
